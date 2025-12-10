@@ -1,0 +1,3 @@
+from .DiarizerInterface import DiarizerInterface
+from .SummarizerInterface import SummarizerInterface
+from .TranscripterInterface import TranscripterInterface

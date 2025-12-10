@@ -1,0 +1,46 @@
+services:
+  # Serviço 1: Ambiente Python
+  app:
+    build: .
+    container_name: zolt_summarizer
+    volumes:
+      # Mapeia a pasta 'outputs' do seu PC para dentro do container
+      - ./outputs:/workspace/outputs
+      # Mapeia seu código atual para desenvolvimento (opcional, mas útil)
+      - .:/workspace
+    environment:
+      # Variável para dizer ao script Python onde está o Ollama
+      - OLLAMA_HOST=http://ollama_service:11434
+    depends_on:
+      - ollama_service
+    # Se você tiver GPU Nvidia e drivers configurados, descomente as linhas abaixo:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+  # Serviço 2: O servidor Ollama oficial
+  ollama_service:
+    image: ollama/ollama:latest
+    container_name: ollama_backend
+    volumes:
+      # Persiste os modelos baixados (para não baixar llama3 toda vez que reiniciar)
+      - ollama_data:/root/.ollama
+    ports:
+      # Expõe a porta para você testar no navegador do host se quiser (localhost:11434)
+      - "11434:11434"
+    # Se tiver GPU, descomente aqui também para o Ollama ficar rápido:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+# Define o volume persistente para os modelos do Ollama
+volumes:
+  ollama_data:

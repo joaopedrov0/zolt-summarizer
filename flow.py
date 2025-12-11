@@ -10,7 +10,7 @@ Nayahath.set_config("line", False)
 Nayahath.set_config("file", False)
 
 from pathlib import Path
-from modules import OutputManager, Synchronizer, TranscripterWhisper, DiarizerPyannote, SummarizerQwen3
+from modules import OutputManager, Synchronizer, TranscripterWhisper, DiarizerPyannote, SummarizerQwen3, OneShotSummarizer
 from modules.Interfaces import DiarizerInterface, SummarizerInterface, TranscripterInterface
 import zolt_config as config
 
@@ -37,9 +37,9 @@ TranscripterInterface.register(TranscripterWhisper)
 Nayahath.action("Transcripter", "Contract signed.")
 transcripter = TranscripterWhisper()
 
-SummarizerInterface.register(SummarizerQwen3)
+SummarizerInterface.register(OneShotSummarizer)
 Nayahath.action("Summarizer", "Contract signed.")
-summarizer = SummarizerQwen3(model=summarizer_model)
+summarizer = OneShotSummarizer(model=summarizer_model)
 
 speakers_dictionaries = diarizer.diarize(audio_file_path, hugging_face_token=hugging_face_token)
 

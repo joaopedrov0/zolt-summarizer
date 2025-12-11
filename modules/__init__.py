@@ -6,3 +6,4 @@ from .SummarizerQwen3 import SummarizerQwen3
 from .Synchronizer import Synchronizer 
 from .TranscripterWhisper import TranscripterWhisper
 from .ArcanaFlow import Nayahath
+from .OneShotSummarizer import OneShotSummarizer

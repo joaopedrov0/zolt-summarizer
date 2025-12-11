@@ -1,5 +1,5 @@
 from modules.SummarizerQwen3 import SummarizerQwen3
-from modules import OutputManager
+from modules import OutputManager, OneShotSummarizer
 
 text = '''SPEAKER_00:  Iniciar a gravação, pronto.
 SPEAKER_00:  É, então.
@@ -794,7 +794,7 @@ Nayahath.action("Summarizer", "Initializing Summarization")
 om = OutputManager('./teste_ollama')
 om.create_timestamped_folder("TESTE_OLLAMA")
 
-qwen = SummarizerQwen3(model="llama3")
+qwen = OneShotSummarizer(model="glm-4.6:cloud")
     
 res = qwen.summarize(text)
 

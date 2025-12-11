@@ -1,106 +1,131 @@
 # 🔔 Zolt Summarizer
 
-Ferramenta de sumarização de áudios usando Whisper para transcrição, pyannote para diarização e modelos de LLM através de Ollama para sumarização.
+O **Zolt Summarizer** é uma ferramenta robusta de processamento de áudio concebida para transformar gravações de reuniões e conversas em resumos inteligentes e estruturados.
 
-## Requisitos
+O pipeline integra tecnologias de ponta para realizar a transcrição (Whisper), identificação de oradores (Pyannote) e geração de resumos através de LLMs locais (Ollama).
 
-- Docker
-- FFmpeg
+## 🚀 Funcionalidades Principais
 
+  * **Transcrição de Alta Precisão:** Utiliza o modelo **Whisper** (OpenAI) para converter áudio em texto.
+  * **Diarização de Oradores:** Identifica "quem falou o que" utilizando o **Pyannote Audio**.
+  * **Resumos com IA Local:** Integração com o **Ollama** para gerar resumos utilizando modelos como Llama3 ou Qwen.
+  * **Pipeline Modular:** Sistema orquestrado pelo módulo `ArcanaFlow` (Nayahath) para logs detalhados e gestão de fluxo.
 
-## Como usar
+## 📋 Pré-requisitos
 
-Construir a imagem Python a partir do Dockerfile, baixar a imagem oficial do Ollama e subir os dois em modo "detached" (em segundo plano)
+Para executar este projeto, necessitará de ter instalado:
 
-```
+  * [Docker](https://www.docker.com/) e Docker Compose
+  * [FFmpeg](https://ffmpeg.org/) (recomendado para manipulação de ficheiros de áudio)
+  * Uma conta no **Hugging Face** e um token de acesso (para descarregar os modelos do Pyannote).
+
+## 🛠️ Instalação e Configuração
+
+### 1\. Preparar o Ambiente Docker
+
+O projeto utiliza o Docker para gerir as dependências do Python e o serviço do Ollama.
+
+Clone o repositório e construa os contentores:
+
+```bash
 docker-compose up -d --build
 ```
 
-Depois disso, inicie e teste o Ollama (dê um oi pro modelo que você quer de sumarizador)
+Este comando irá iniciar dois serviços:
 
-```
+  * `zolt_summarizer`: O ambiente Python com as bibliotecas necessárias.
+  * `ollama_backend`: O servidor para os modelos de linguagem.
+
+### 2\. Configurar o Modelo de IA (Ollama)
+
+Antes de iniciar o resumo, é necessário descarregar o modelo de linguagem que deseja utilizar (ex: llama3, qwen, mistral). Execute o seguinte comando para descarregar e testar o modelo:
+
+```bash
 docker exec -it ollama_backend ollama run llama3
 ```
 
-![alt text](./readme_images/image.png)
+> **Nota:** Pode substituir `llama3` por qualquer outro modelo disponível na biblioteca do Ollama.
+> Para sair do chat do Ollama, digite `/bye`.
 
-> Você pode trocar `llama3` pelo modelo que você quer usar.
+![teste ollama](./readme_images/image.png)
 
-Saia do container encerrando a conversa com o seguinte comando:
+### 3\. Configurar o Projeto (`zolt_config.py`)
 
+Edite o ficheiro `zolt_config.py` na raiz do projeto com as suas configurações:
+
+```python
+HUGGING_FACE_TOKEN="O_SEU_TOKEN_HUGGING_FACE"  # Necessário para o Pyannote
+FILE_PATH="./caminho/para/o/seu_audio.wav"     # O ficheiro de áudio a processar
+SUMMARIZER_MODEL="llama3"                      # O modelo que descarregou no passo anterior
+TIMESTAMPS=False                               # Definir como True para incluir carimbos de tempo no resumo
 ```
-/bye
-```
 
-Em seguida entre no container com o zolt, é aqui que você vai executar o pipeline.
+> **Importante:** O Pyannote requer que aceite os termos de utilização dos modelos `pyannote/speaker-diarization` e `pyannote/segmentation` no site do Hugging Face para que o seu token funcione.
 
-```
+## ▶️ Como Utilizar
+
+### 1\. Aceder ao Contentor
+
+Entre no terminal do contentor principal onde o script será executado:
+
+```bash
 docker exec -it zolt_summarizer /bin/bash
 ```
 
-Garanta que todas as bibliotecas estão instaladas:
+### 2\. Instalar Dependências
+
+Garanta que todas as bibliotecas Python estão atualizadas:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-> Se você quiser fazer a extração de áudio de um vídeo com ffmpeg, basta entrar no local onde o vídeo está (pasta) através do terminal e usar este comando do ffmpeg:
->```
-> ffmpeg -i "seuvideo.mp4" -vn -acodec pcm_s16le -ar 16000 -ac 1 "seuaudio.wav"
->```
->
-> Troque `seuvideo.mp4` pelo caminho para o seu vídeo e `seuaudio.wav` para o caminho do seu áudio
+### 3\. Executar o Pipeline
 
-Adicione suas variáveis de configuração no arquivo `zolt_config.py`, os nomes são bem descritivos. Ele se parece com isso aqui:
+Inicie o processo de sumarização executando o script principal:
 
-```python
-HUGGING_FACE_TOKEN="SEU_TOKEN"
-FILE_PATH="./CAMINHO_PRO_SEU_AUDIO.wav"
-SUMMARIZER_MODEL="qwen3:1.7b" # o modelo que você quer usar
-TIMESTAMPS=False # se quer que ele use as transcrições com ou sem timestamps (ambas serão salvas)
-```
-
-## Tudo pronto?
-
-Se você conseguiu, basta rodar executar esse comando para o pipeline principal:
-
-```
+```bash
 python flow.py
 ```
 
-E pronto! agora é só assistir eles preparando seu resumo.
+O sistema, gerido pela entidade "Nayahath", irá apresentar o progresso no terminal, passando pela diarização, transcrição e, finalmente, o resumo.
 
-Pode demorar um tempinho (provavelmente vai), então talvez você queira entender o que está acontecendo no seu terminal, pra saber o quão próximo seu resumo está de ficar pronto.
+📂 **Resultados:** Os ficheiros gerados (transcrições e resumos) serão guardados na diretoria `outputs/`, organizados por data e hora.
 
-Pra começar, temos 4 entidades principais que fazem isso acontecer.
+-----
 
-- Nayahath
-- Diarizer
-- Transcripter
-- Summarizer
+## 🧩 Arquitetura do Sistema
 
-### Nayahath
+O Zolt Summarizer é composto por quatro entidades principais que colaboram para gerar o resultado final:
 
-Ela é basicamente a "coordenadora" das demais. Ela é uma instância do módulo ArcanaFlow, que desenha esse log bonitinho que você ta vendo no terminal.
+1.  **🟣 Nayahath (ArcanaFlow):**
+    A coordenadora do sistema. É responsável por gerir o fluxo de execução, instanciar as interfaces e apresentar os logs coloridos e detalhados no terminal.
 
-Ela inicia o pipeline dizendo que eles estão verificando as interfaces.
+2.  **🔵 Diarizer:**
+    Responsável por identificar os oradores. Utiliza o **Pyannote** para segmentar o áudio e atribuir etiquetas (ex: SPEAKER\_00, SPEAKER\_01) a cada intervalo de fala.
 
-Isso porque você pode implementar sua própria versão de diarizador, transcritor e sumarizador, a pasta `./modules/Interfaces` pode te ajudar a conseguir mais instruções sobre isso.
+3.  **🟢 Transcripter:**
+    Utiliza o **Whisper** (modelo `turbo` por defeito) para converter o áudio em texto bruto, ignorando quem está a falar e focando-se apenas no conteúdo.
 
-### Diarizer
+4.  **🟡 Summarizer:**
+    Recebe os dados sincronizados do *Diarizer* e do *Transcripter*. Envia o texto estruturado para o **Ollama**, instruindo o modelo a gerar um resumo contextualizado, atas ou responder a perguntas específicas sobre a conversa.
 
-O papel dele é basicamente identificar no seu áudio "quem está falando o que". Ele vai fazer o que chamamos de "diarização" que é a separação dos falantes do áudio por características extraídas da voz.
+-----
 
-A versão padrão dele usa pyannote, mas como eu falei, você pode implementar uma versão sua se quiser.
+## 💡 Dicas Úteis
 
-### Transcripter
+### Extrair áudio de vídeo
 
-O papel dele transcrever o seu áudio. Ele não está preocupado com "quem falou o que" mas sim com **o que foi dito**. Ele vai anotar as falas e os tempos, pra depois conversar com o diarizer e descobrir algo muito importante: "**Quem** falou **o que**".
+Se tiver uma gravação em vídeo (MP4), utilize o **FFmpeg** para extrair o áudio no formato correto (WAV 16kHz mono) antes de o processar:
 
-Depois dessa conversa dos dois, eles vão preparar uma entrada pra próxima entidade.
+```bash
+ffmpeg -i "video_reuniao.mp4" -vn -acodec pcm_s16le -ar 16000 -ac 1 "audio_processado.wav"
+```
 
-### Summarizer
+### Testar apenas o Resumo
 
-O papel do Summarizer é pegar o que o Diarizer e o Transcripter escreveram juntos, ler e criar um resumo. Os summarizers vêm do Ollama, você pode escolher outro modelo de lá se quiser testar outro.
+Se já tiver o texto transcrito e quiser apenas testar diferentes prompts ou modelos de LLM sem reprocessar o áudio, pode editar e executar o script de teste:
 
-Caso você tenha feito o pipeline inteiro, mas quiser testar os mesmos valores com outro summarizer, não precisa rodar tudo denovo. Basta editar e executar o arquivo `teste_ollama.py`, ele permite executar **só o summarizer** direto, sem o resto do pessoal. Assim você pode fazer testes mais rápidos, só colando o texto que você quer no valor da variável.
+```bash
+python teste_ollama.py
+```
